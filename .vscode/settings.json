@@ -1,0 +1,10 @@
+{
+  "cSpell.words": [
+    "rspress"
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.format": "explicit"
+  },
+  "editor.formatOnSave": true
+}

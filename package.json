@@ -1,0 +1,26 @@
+{
+  "name": "rspress-doc-template",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "rspress dev",
+    "build": "rspress build",
+    "preview": "rspress preview"
+  },
+  "dependencies": {
+    "@rsbuild/plugin-node-polyfill": "^0.7.10",
+    "mobx": "^6.12.4",
+    "mobx-react-lite": "^4.0.7",
+    "rspress": "^1.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16",
+    "eslint": "^9.5.0",
+    "prettier": "^3.3.2"
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "all"
+  }
+}
