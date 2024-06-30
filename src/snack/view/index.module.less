@@ -47,18 +47,24 @@
 
 .snackBody {
   position: absolute;
-  top: calc(var(--x) / var(--rows) * 100%);
-  left: calc(var(--y) / var(--cols) * 100%);
+  left: calc(var(--x) / var(--rows) * 100%);
+  top: calc(var(--y) / var(--cols) * 100%);
   width: calc(100% / var(--cols));
   height: calc(100% / var(--rows));
-  background-color: #000;
+  background-color: #092b00;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &.head {
+    background-color: #52c41a;
+  }
 }
 
 .snackFood {
   position: absolute;
-  top: calc(var(--x) / var(--rows) * 100%);
-  left: calc(var(--y) / var(--cols) * 100%);
+  left: calc(var(--x) / var(--rows) * 100%);
+  top: calc(var(--y) / var(--cols) * 100%);
   width: calc(100% / var(--cols));
   height: calc(100% / var(--rows));
-  background-color: #f00;
+  background-color: #f5222d;
+  border-radius: 50%;
 }

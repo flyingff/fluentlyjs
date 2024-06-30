@@ -63,6 +63,6 @@ class ReducedValueBuilder<T> {
   }
 
   public build(initialValue: T) {
-    return new ReducedValue(initialValue, this.reducers);
+    return new ReducedValue<T>(initialValue, this.reducers);
   }
 }

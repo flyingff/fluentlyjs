@@ -1,15 +1,11 @@
 import { Scope, ScopeDisposable, scopeDisposeSymbol } from '@/context';
 import { EventSource } from '@/declarative';
 import { ReducedValue } from '@/declarative/reducer';
-import { autorun } from 'mobx';
+import { makeAutoObservable } from 'mobx';
 
 type GameStatus = 'idle' | 'running' | 'pause' | 'over';
 
-const directionChangeEvent = new EventSource<
-  'up' | 'down' | 'left' | 'right'
->();
-
-const GAME_TICK_INTERVAL = 500;
+const GAME_TICK_INTERVAL = 200;
 class SnackGameEvents {
   private timerId: number | null = null;
 
@@ -17,12 +13,16 @@ class SnackGameEvents {
   public readonly gameStartEvent;
   public readonly gameOverEvent;
   public readonly timeElapseEvent;
+  public readonly directionChangeEvent;
 
   public constructor(scope: Scope) {
     this.eatFoodEvent = new EventSource<void>(scope);
     this.gameStartEvent = new EventSource<void>(scope);
     this.gameOverEvent = new EventSource<void>(scope);
     this.timeElapseEvent = new EventSource<void>(scope);
+    this.directionChangeEvent = new EventSource<
+      'up' | 'down' | 'left' | 'right'
+    >();
 
     this.gameStartEvent.addEffect(() => this.startTimer());
     this.gameOverEvent.addEffect(() => this.stopTimer());
@@ -52,7 +52,7 @@ class GameStatisticsModel {
   status: ReducedValue<GameStatus>;
 
   constructor(
-    scope: Scope,
+    _scope: Scope,
     { eatFoodEvent, gameStartEvent, gameOverEvent }: SnackGameEvents,
   ) {
     this.score = ReducedValue.builder<number>()
@@ -74,28 +74,59 @@ class GameStatisticsModel {
 }
 
 type MoveDirection = 'up' | 'down' | 'left' | 'right';
+interface MoveInfo {
+  lastMoveDirection: MoveDirection;
+  nextMoveDirection: MoveDirection;
+}
 
 const width = 32;
 const height = 32;
 
 class SnackGameModel {
-  public readonly direction: ReducedValue<MoveDirection>;
+  public readonly direction: ReducedValue<MoveInfo>;
   public readonly body: ReducedValue<[x: number, y: number][]>;
   public readonly foods: ReducedValue<[x: number, y: number][]>;
 
   constructor(
-    scope: Scope,
+    _scope: Scope,
     {
       eatFoodEvent,
       gameStartEvent,
       gameOverEvent,
       timeElapseEvent,
+      directionChangeEvent,
     }: SnackGameEvents,
   ) {
-    this.direction = ReducedValue.builder<MoveDirection>()
-      .addReducer(directionChangeEvent, (_, direction) => direction)
-      .addReducer(gameStartEvent, () => 'up')
-      .build('up');
+    // 判断两个方向是否是可以兼容的，比如说向上的时候不能向下，否则会直接撞自己而结束游戏
+    function directionCompatible(prev: MoveDirection, next: MoveDirection) {
+      return (
+        (prev === 'up' && next !== 'down') ||
+        (prev === 'down' && next !== 'up') ||
+        (prev === 'left' && next !== 'right') ||
+        (prev === 'right' && next !== 'left')
+      );
+    }
+
+    this.direction = ReducedValue.builder<MoveInfo>()
+      .addReducer(directionChangeEvent, (info, newDirection) => {
+        if (!directionCompatible(info.lastMoveDirection, newDirection)) {
+          return info;
+        }
+
+        return {
+          ...info,
+          nextMoveDirection: newDirection,
+        };
+      })
+      .addReducer(gameStartEvent, () => ({
+        lastMoveDirection: 'up',
+        nextMoveDirection: 'up',
+      }))
+      .addReducer(timeElapseEvent, (info) => ({
+        ...info,
+        lastMoveDirection: info.nextMoveDirection,
+      }))
+      .build({ lastMoveDirection: 'up', nextMoveDirection: 'up' });
 
     this.body = ReducedValue.builder<[x: number, y: number][]>()
       .addReducer(gameStartEvent, () => [[width / 2, height / 2]])
@@ -116,7 +147,7 @@ class SnackGameModel {
           }
         }
         const [head] = body;
-        const newHead = move(head, this.direction.value);
+        const newHead = move(head, this.direction.value.nextMoveDirection);
 
         // 判断是否撞墙
         if (
@@ -130,7 +161,11 @@ class SnackGameModel {
         }
 
         // 判断是否撞自己
-        if (body.some(([x, y]) => x === newHead[0] && y === newHead[1])) {
+        if (
+          body
+            .slice(0, -1)
+            .some(([x, y]) => x === newHead[0] && y === newHead[1])
+        ) {
           gameOverEvent.emitFunction();
           return body;
         }

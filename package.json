@@ -9,12 +9,15 @@
   },
   "dependencies": {
     "@rsbuild/plugin-node-polyfill": "^0.7.10",
+    "classnames": "^2.5.1",
     "mobx": "^6.12.4",
     "mobx-react-lite": "^4.0.7",
     "rspress": "^1.25.0"
   },
   "devDependencies": {
     "@types/node": "^16",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "eslint": "^9.5.0",
     "prettier": "^3.3.2"
   },
