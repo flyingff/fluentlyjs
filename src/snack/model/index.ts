@@ -1,7 +1,10 @@
 import { Scope, ScopeDisposable, scopeDisposeSymbol } from '@/context';
 import { EventSource } from '@/declarative';
+import { AsyncMap } from '@/declarative/asyncMap';
 import { ReducedValue } from '@/declarative/reducer';
 import { makeAutoObservable } from 'mobx';
+import { getHighestScore, reportScore } from '../service/score';
+import { Action } from '@/declarative/action';
 
 type GameStatus = 'idle' | 'running' | 'pause' | 'over';
 
@@ -24,8 +27,11 @@ class SnackGameEvents {
       'up' | 'down' | 'left' | 'right'
     >();
 
-    this.gameStartEvent.addEffect(() => this.startTimer());
-    this.gameOverEvent.addEffect(() => this.stopTimer());
+    const startTimerAction = new Action(() => this.startTimer());
+    const stopTimerAction = new Action(() => this.stopTimer());
+
+    startTimerAction.runOn(this.gameStartEvent, () => {});
+    stopTimerAction.runOn(this.gameOverEvent, () => {});
   }
 
   public startTimer() {
@@ -48,8 +54,10 @@ class SnackGameEvents {
 
 class GameStatisticsModel {
   score: ReducedValue<number>;
-  bestScore: ReducedValue<number>;
   status: ReducedValue<GameStatus>;
+  bestScoreRefreshTime: ReducedValue<number>;
+  bestScore: AsyncMap<number, number>;
+  updateBestScoreAction: Action<void>;
 
   constructor(
     _scope: Scope,
@@ -59,17 +67,27 @@ class GameStatisticsModel {
       .addReducer(eatFoodEvent, (score) => score + 1)
       .build(0);
 
-    this.bestScore = ReducedValue.builder<number>()
-      .addReducer(gameOverEvent, (bestScore) => {
-        const score = this.score.value;
-        return score > bestScore ? score : bestScore;
-      })
-      .build(0);
-
     this.status = ReducedValue.builder<GameStatus>()
       .addReducer(gameStartEvent, () => 'running')
       .addReducer(gameOverEvent, () => 'over')
       .build('idle');
+
+    this.bestScoreRefreshTime = ReducedValue.builder<number>()
+      .addReducer(gameOverEvent, () => Date.now())
+      .build(0);
+
+    this.updateBestScoreAction = new Action(() => {
+      return reportScore(this.score.value);
+    });
+    this.updateBestScoreAction.runOn(gameOverEvent, () => {});
+
+    this.bestScore = new AsyncMap(
+      () => this.bestScoreRefreshTime,
+      async () => {
+        return getHighestScore();
+      },
+      0,
+    );
   }
 }
 

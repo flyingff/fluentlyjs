@@ -2,6 +2,7 @@ import { Scope, Scoped, scopeDisposeSymbol } from '@/context';
 import { AsyncValue } from './async';
 import EventEmitter from 'events';
 import { runInAction } from 'mobx';
+import { Action } from './action';
 
 export interface EventSourceRegister<EVENT> {
   (listener: (event: EVENT) => void): () => void;
@@ -103,10 +104,13 @@ export class EventSource<T> implements Scoped {
     }
   }
 
-  public addEffect(effect: (event: T) => void) {
-    this.emitter.on('event', effect);
+  /**
+   * 尽量不要在业务代码中使用这个方法，尽量使用Action类的实例来触发动作
+   */
+  public triggerAction(action: (event: T) => void) {
+    this.emitter.on('event', action);
     return () => {
-      this.emitter.off('event', effect);
+      this.emitter.off('event', action);
     };
   }
 }

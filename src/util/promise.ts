@@ -7,3 +7,6 @@ export const createPromiseResolver = <T>() => {
   });
   return { resolve: resolve!, reject: reject!, promise };
 };
+
+export const delay = (ms: number) =>
+  new Promise((resolve) => window.setTimeout(resolve, ms));

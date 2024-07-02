@@ -28,7 +28,6 @@ export class ReducedValue<T> implements AsyncValue<T> {
   private listenAllEvents(reducers: ValueReducer<any, T>[]) {
     for (const reducer of reducers) {
       (async () => {
-        console.log('listenAllEvents');
         for await (const event of reducer.eventSource.listen()) {
           // TODO: add try catch here
           runInAction(() => {
