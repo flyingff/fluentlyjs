@@ -11,7 +11,7 @@ const SnackHeaderView = observer(
     const status = controller.statistics.status.value;
 
     const handleGameStart = () => {
-      controller.events.gameStartEvent.emitFunction();
+      controller.events.gameStartEvent.emitOnce();
     };
 
     return (
@@ -100,19 +100,19 @@ const SnackGameView: React.FC = () => {
     const handleKeyDown = (event: KeyboardEvent) => {
       switch (event.key) {
         case 'ArrowUp':
-          controller.events.directionChangeEvent.emitFunction('up');
+          controller.events.directionChangeEvent.emitOnce('up');
           event.preventDefault();
           break;
         case 'ArrowDown':
-          controller.events.directionChangeEvent.emitFunction('down');
+          controller.events.directionChangeEvent.emitOnce('down');
           event.preventDefault();
           break;
         case 'ArrowLeft':
-          controller.events.directionChangeEvent.emitFunction('left');
+          controller.events.directionChangeEvent.emitOnce('left');
           event.preventDefault();
           break;
         case 'ArrowRight':
-          controller.events.directionChangeEvent.emitFunction('right');
+          controller.events.directionChangeEvent.emitOnce('right');
           event.preventDefault();
           break;
         default:

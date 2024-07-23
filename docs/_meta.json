@@ -1,16 +1,12 @@
 [
   {
-    "text": "Guide",
-    "link": "/guide/",
-    "activeMatch": "/guide/"
+    "text": "Architecture",
+    "link": "/architecture/overview",
+    "activeMatch": "/architecture/"
   },
   {
-    "text": "Hello World",
-    "link": "/hello/",
-    "activeMatch": "/hello/"
-  },
-  {
-    "text": "API",
-    "link": "https://rspress.dev/api/index.html"
+    "text": "Examples",
+    "link": "/example/form",
+    "activeMatch": "/example/"
   }
 ]

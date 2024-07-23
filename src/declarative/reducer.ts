@@ -1,11 +1,11 @@
 import { Scope } from '@/context';
 import { AsyncValue } from './async';
-import { EventSource } from './event';
+import { EventRegistry } from './event';
 import { computed, makeObservable, observable, runInAction } from 'mobx';
 
 export interface ValueReducer<EVENT, T> {
   reducer: (value: T, event: EVENT) => T;
-  eventSource: EventSource<EVENT>;
+  eventSource: EventRegistry<EVENT>;
 }
 
 export class ReducedValue<T> implements AsyncValue<T> {
@@ -13,8 +13,37 @@ export class ReducedValue<T> implements AsyncValue<T> {
     return new ReducedValueBuilder<T>();
   }
 
+  public static lastMappedEventValue<EVENT, VALUE>(
+    event: EventRegistry<EVENT>,
+    initialValue: VALUE,
+    mapper: (event: EVENT) => VALUE,
+    filter?: (event: EVENT) => boolean,
+  ) {
+    const reducer: ValueReducer<EVENT, VALUE> = {
+      eventSource: event,
+      reducer: (oldValue, event) => {
+        const filterCheckResult = filter ? filter(event) : true;
+        return filterCheckResult ? mapper(event) : oldValue;
+      },
+    };
+    return new ReducedValue(initialValue, [reducer]);
+  }
+
+  public static lastEventValue<EVENT>(
+    event: EventRegistry<EVENT>,
+    initialValue: EVENT,
+    filter?: (event: EVENT) => boolean,
+  ) {
+    return ReducedValue.lastMappedEventValue<EVENT, EVENT>(
+      event,
+      initialValue,
+      (event) => event,
+      filter,
+    );
+  }
+
   private _value: T;
-  public constructor(initialValue: T, reducers: ValueReducer<T, any>[]) {
+  public constructor(initialValue: T, reducers: ValueReducer<any, T>[]) {
     this._value = initialValue;
     makeObservable(this, {
       ['_value' as string]: observable.ref,
@@ -54,7 +83,7 @@ class ReducedValueBuilder<T> {
   }
 
   public addReducer<EVENT>(
-    eventSource: EventSource<EVENT>,
+    eventSource: EventRegistry<EVENT>,
     reducer: (value: T, event: EVENT) => T,
   ) {
     this.reducers.push({ reducer, eventSource });

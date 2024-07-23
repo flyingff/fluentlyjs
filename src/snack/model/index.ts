@@ -1,8 +1,7 @@
 import { Scope, ScopeDisposable, scopeDisposeSymbol } from '@/context';
-import { EventSource } from '@/declarative';
+import { EventRegistry } from '@/declarative';
 import { AsyncMap } from '@/declarative/asyncMap';
 import { ReducedValue } from '@/declarative/reducer';
-import { makeAutoObservable } from 'mobx';
 import { getHighestScore, reportScore } from '../service/score';
 import { Action } from '@/declarative/action';
 
@@ -19,11 +18,11 @@ class SnackGameEvents {
   public readonly directionChangeEvent;
 
   public constructor(scope: Scope) {
-    this.eatFoodEvent = new EventSource<void>(scope);
-    this.gameStartEvent = new EventSource<void>(scope);
-    this.gameOverEvent = new EventSource<void>(scope);
-    this.timeElapseEvent = new EventSource<void>(scope);
-    this.directionChangeEvent = new EventSource<
+    this.eatFoodEvent = new EventRegistry<void>(scope);
+    this.gameStartEvent = new EventRegistry<void>(scope);
+    this.gameOverEvent = new EventRegistry<void>(scope);
+    this.timeElapseEvent = new EventRegistry<void>(scope);
+    this.directionChangeEvent = new EventRegistry<
       'up' | 'down' | 'left' | 'right'
     >();
 
@@ -39,7 +38,7 @@ class SnackGameEvents {
       return;
     }
     this.timerId = window.setInterval(() => {
-      this.timeElapseEvent.emitFunction();
+      this.timeElapseEvent.emitOnce();
     }, GAME_TICK_INTERVAL);
   }
 
@@ -174,7 +173,7 @@ class SnackGameModel {
           newHead[1] < 0 ||
           newHead[1] >= height
         ) {
-          gameOverEvent.emitFunction();
+          gameOverEvent.emitOnce();
           return body;
         }
 
@@ -184,14 +183,14 @@ class SnackGameModel {
             .slice(0, -1)
             .some(([x, y]) => x === newHead[0] && y === newHead[1])
         ) {
-          gameOverEvent.emitFunction();
+          gameOverEvent.emitOnce();
           return body;
         }
 
         const foods = this.foods.value;
         // 判断是否吃到食物
         if (foods.some(([x, y]) => x === newHead[0] && y === newHead[1])) {
-          eatFoodEvent.emitFunction();
+          eatFoodEvent.emitOnce();
           foods.pop();
           return [newHead, ...body];
         } else {

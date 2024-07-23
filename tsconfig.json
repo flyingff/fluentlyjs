@@ -13,4 +13,5 @@
   "mdx": {
     "checkMdx": true
   },
+  "include": ["src", "docs"]
 }

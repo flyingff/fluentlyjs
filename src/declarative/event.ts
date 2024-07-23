@@ -8,15 +8,18 @@ export interface EventSourceRegister<EVENT> {
   (listener: (event: EVENT) => void): () => void;
 }
 
-export class EventSource<T> implements Scoped {
+export class EventRegistry<EventType> implements Scoped {
   public readonly scope: Scope;
 
   private readonly emitter = new EventEmitter();
 
-  public readonly emitFunction = (event: T) => {
+  private readonly companionTriggers: ((event: EventType) => void)[] = [];
+
+  public readonly emitOnce = (event: EventType) => {
     if (this.scope.disposed) {
       return;
     }
+    // 是否可以做到，在“一次”事件触发中，满足
     runInAction(() => {
       this.emitter.emit('event', event);
     });
@@ -32,12 +35,12 @@ export class EventSource<T> implements Scoped {
   /**
    * 增加绑定事件
    */
-  public registry(register: EventSourceRegister<T>) {
+  public registry(register: EventSourceRegister<EventType>) {
     if (this.scope.disposed) {
       return;
     }
 
-    const unregister = register(this.emitFunction);
+    const unregister = register(this.emitOnce);
 
     this.scope.lifecycle.addDisposeListener(unregister);
 
@@ -47,12 +50,12 @@ export class EventSource<T> implements Scoped {
   /**
    * 这个方法用于将事件转换为异步迭代器
    */
-  private async *generatorFactory(): AsyncGenerator<T, void, void> {
-    const eventQueue: T[] = [];
+  private async *generatorFactory(): AsyncGenerator<EventType, void, void> {
+    const eventQueue: EventType[] = [];
     let fnNotify: () => void = () => {};
     let cancelled = false;
 
-    const eventHandler = (value: T) => {
+    const eventHandler = (value: EventType) => {
       if (cancelled) {
         return;
       }
@@ -107,25 +110,29 @@ export class EventSource<T> implements Scoped {
   /**
    * 尽量不要在业务代码中使用这个方法，尽量使用Action类的实例来触发动作
    */
-  public triggerAction(action: (event: T) => void) {
+  public triggerAction(action: (event: EventType) => void) {
     this.emitter.on('event', action);
     return () => {
       this.emitter.off('event', action);
     };
   }
+
+  public triggerCompanion(companion: (event: EventType) => void) {
+    this.companionTriggers.push(companion);
+  }
 }
 
 // 这个类用于将事件转换为可观察对象，保留最后一个事件
-export class LastEventObservable<T> implements AsyncValue<T | null> {
+export class LastEventValue<T> implements AsyncValue<T | null> {
   private lastEvent: T | null = null;
   private hasFirstEventArrived = false;
 
-  public constructor(eventSource: EventSource<T>, scope = Scope.global) {
+  public constructor(eventSource: EventRegistry<T>, scope = eventSource.scope) {
     const disposer = this.startObserving(eventSource);
     scope.lifecycle.addDisposeListener(disposer);
   }
 
-  private startObserving(eventSource: EventSource<T>) {
+  private startObserving(eventSource: EventRegistry<T>) {
     const generator = eventSource.listen();
 
     let disposed = false;

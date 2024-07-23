@@ -13,4 +13,3 @@
 export * from './async';
 export * from './event';
 export * from './latch';
-export * from './observable';
