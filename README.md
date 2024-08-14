@@ -1,40 +1,20 @@
-# Modern.js Package
+# FluentlyJS
 
-## Setup
+⚠️ This is a internal snapshot version for the `FluentlyJS` package. It is not intended for public use at now.
 
-Install the dependencies:
+It is a library for building fluent data flow in JavaScript. It aims to help developers to write more readable and maintainable code by providing a set of human-friendly abstraction for so called "state management" in the front-end.
 
-```bash
-yarn install
-```
+It can also be used in the back-end to build a more readable and maintainable codebase.
 
-## Get Started
-
-Run and debug the module:
+## Installation
 
 ```bash
-yarn dev
+npm install fluentlyjs
 ```
 
-Build the module for production:
+## Usage
 
-```bash
-yarn build
+```javascript
+// TODO: DEMONSTRATE API
 ```
 
-Enable optional features:
-
-```bash
-yarn new
-```
-
-Other commands:
-
-```bash
-yarn lint         # Lint and fix source files
-yarn change       # Add a new changeset
-yarn bump         # Update version and changelog via changeset
-yarn release      # Release the package
-```
-
-For more information, see the [Modern.js Module documentation](https://modernjs.dev/module-tools/en).

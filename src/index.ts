@@ -1,3 +1,2 @@
-export default function () {
-  return 'hello world';
-}
+export * from './context';
+export * from './declarative';
