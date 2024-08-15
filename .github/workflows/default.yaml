@@ -54,11 +54,11 @@ jobs:
           yarn build
         env:
           STATIC_PATH: '/'
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload Github Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: github-pages-${{ github.run_number }}
-          path: dist
+          name: github-pages
+          path: dist/
           retention-days: 1
   # 部署
   deploy:
@@ -77,4 +77,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
         with:
-          artifact_name: github-pages-${{ github.run_number }}
+          artifact_name: github-pages
