@@ -41,4 +41,5 @@ export default defineConfig({
     },
     plugins: [pluginNodePolyfill()],
   },
+  outDir: 'dist',
 });
