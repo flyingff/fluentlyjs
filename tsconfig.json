@@ -5,6 +5,7 @@
     "strict": true,
     "target": "ESNext",
     "moduleResolution": "Bundler",
+    "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]

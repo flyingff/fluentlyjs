@@ -17,8 +17,6 @@ export const getTodoList = async (
     return array;
   }
 
-  console.log(array, filter);
-
   return array.filter((item) => {
     if (filter.completed !== undefined && item.completed !== filter.completed) {
       return false;

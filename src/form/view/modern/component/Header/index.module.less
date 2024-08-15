@@ -1,0 +1,76 @@
+.title {
+  position: relative;
+  font-size: 20px;
+  font-weight: 300;
+}
+
+.btnReload {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-size: 20px;
+  bottom: 0;
+  margin: auto;
+  color: #333;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
+  &:active {
+    opacity: 0.6;
+  }
+  &.loading {
+    cursor: wait;
+    opacity: 0.6;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.filterButtonWrapper {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.filterButton {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 2px 8px;
+  line-height: 20px;
+  background-color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: opacity 0.2s ease;
+
+  &.active {
+    background-color: #f0f0f0;
+    cursor: default;
+  }
+
+  &:not(.active) {
+    &:hover {
+      opacity: 0.8;
+    }
+    &:active {
+      opacity: 0.6;
+    }
+    &.loading {
+      cursor: wait;
+      opacity: 0.6;
+    }
+  }
+}

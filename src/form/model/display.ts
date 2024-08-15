@@ -1,6 +1,4 @@
-import { Scope } from '@/context';
-import { AsyncValue, EventRegistry } from '@/declarative';
-import { ReducedValue } from '@/declarative/reducer';
+import { AsyncValue, EventRegistry, ReducedValue, Scope } from 'fluentlyjs';
 import { GetterOf } from '@/util/typings';
 
 const getOriginalValueGetter = <T>(

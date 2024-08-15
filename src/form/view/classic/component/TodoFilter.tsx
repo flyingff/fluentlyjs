@@ -1,9 +1,9 @@
 import { Form, Row, Col, Radio, DatePicker, Button } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { useTodoListController } from '../controller';
+import { useClassicTodoListController } from '../controller';
 
 const TodoListFilterView: React.FC = observer(() => {
-  const controller = useTodoListController();
+  const controller = useClassicTodoListController();
   return (
     <Form
       layout="vertical"

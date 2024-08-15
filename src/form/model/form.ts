@@ -1,7 +1,4 @@
-import { Scope } from '@/context';
-import { EventRegistry } from '@/declarative';
-import { Action } from '@/declarative/action';
-import { ReducedValue } from '@/declarative/reducer';
+import { Action, EventRegistry, ReducedValue, Scope } from 'fluentlyjs';
 
 export class PopupFormModal<RESULT extends Exclude<{}, null>> {
   private readonly openModalEvent: EventRegistry<RESULT | null>;

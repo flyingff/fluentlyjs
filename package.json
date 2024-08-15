@@ -1,6 +1,6 @@
 {
-  "name": "rspress-doc-template",
-  "version": "1.0.0",
+  "name": "fluentlyjs-doc",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "dev": "rspress dev",
@@ -8,22 +8,25 @@
     "preview": "rspress preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.4.0",
     "@rsbuild/plugin-node-polyfill": "^0.7.10",
     "antd": "^5.19.3",
     "classnames": "^2.5.1",
     "dayjs": "^1.11.12",
-    "mobx": "^6.12.4",
+    "fluentlyjs": "^0.1.0-SNAPSHOT0",
+    "mobx": "^6.13.1",
     "mobx-react-lite": "^4.0.7",
-    "rspress": "^1.25.0"
+    "rspress": "^1.27.1"
   },
   "devDependencies": {
-    "@rspress/plugin-playground": "^1.25.2",
-    "@rspress/plugin-preview": "^1.25.2",
+    "@rspress/plugin-preview": "^1.27.1",
+    "@rspress/plugin-typedoc": "^1.27.1",
     "@types/node": "^16",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "eslint": "^9.5.0",
-    "prettier": "^3.3.2"
+    "prettier": "^3.3.2",
+    "typescript": "~5.1.0"
   },
   "prettier": {
     "semi": true,

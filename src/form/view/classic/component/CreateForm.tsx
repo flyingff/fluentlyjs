@@ -1,9 +1,9 @@
 import { Form, Input, DatePicker, Button, Modal } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { useTodoListController } from '../controller';
+import { useClassicTodoListController } from '../controller';
 
 const CreateFormView: React.FC = observer(() => {
-  const controller = useTodoListController();
+  const controller = useClassicTodoListController();
 
   return (
     <Form
@@ -45,7 +45,7 @@ const CreateFormView: React.FC = observer(() => {
 });
 
 const CreateFormModal: React.FC = observer(() => {
-  const controller = useTodoListController();
+  const controller = useClassicTodoListController();
   return (
     <Modal
       title="创建待办"

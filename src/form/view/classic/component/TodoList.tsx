@@ -1,6 +1,9 @@
 import { Checkbox, Button, Empty, Table, Spin, Modal } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { TodoListFormController, useTodoListController } from '../controller';
+import {
+  ClassicTodoListFormController,
+  useClassicTodoListController,
+} from '../controller';
 import { ColumnsType } from 'antd/es/table';
 import { TodoItem } from '@/form/model/typings';
 import dayjs from 'dayjs';
@@ -9,7 +12,7 @@ import { when } from 'mobx';
 const CompleteCheckbox: React.FC<{
   item: TodoItem;
 }> = observer(({ item }) => {
-  const controller = useTodoListController();
+  const controller = useClassicTodoListController();
   const { id, completed } = item;
   const togglingThis = controller.togglingItemId === id;
 
@@ -28,7 +31,7 @@ const CompleteCheckbox: React.FC<{
 const DeleteButton: React.FC<{
   item: TodoItem;
 }> = observer(({ item }) => {
-  const controller = useTodoListController();
+  const controller = useClassicTodoListController();
   const { id } = item;
   const handleDeleteItem = () => {
     Modal.confirm({
@@ -78,7 +81,7 @@ const tableColumns: ColumnsType<TodoItem> = [
 ];
 
 const TodoListView: React.FC = observer(() => {
-  const controller = useTodoListController();
+  const controller = useClassicTodoListController();
 
   const list = controller.model.displayTodoList.value;
   return (

@@ -1,0 +1,33 @@
+.tileGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-gap: 20px;
+}
+
+.tile {
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 12px 12px 12px 40px;
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.title {
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 400;
+  color: #333;
+}
+.deadline {
+  margin-top: 4px;
+  line-height: 16px;
+  font-size: 12px;
+  color: #999;
+  text-align: right;
+}

@@ -1,9 +1,9 @@
 import { observer } from 'mobx-react-lite';
-import { useTodoListController } from '../controller';
+import { useClassicTodoListController } from '../controller';
 import { Space, Spin } from 'antd';
 
 const TodoListFooterView: React.FC = observer(() => {
-  const controller = useTodoListController();
+  const controller = useClassicTodoListController();
   const list = controller.model.displayTodoList.value;
   return (
     <Spin spinning={controller.listLoading}>

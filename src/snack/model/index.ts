@@ -1,9 +1,13 @@
-import { Scope, ScopeDisposable, scopeDisposeSymbol } from '@/context';
-import { EventRegistry } from '@/declarative';
-import { AsyncMap } from '@/declarative/asyncMap';
-import { ReducedValue } from '@/declarative/reducer';
+import {
+  Action,
+  AsyncMap,
+  EventRegistry,
+  ReducedValue,
+  Scope,
+  ScopeDisposable,
+  scopeDisposeSymbol,
+} from 'fluentlyjs';
 import { getHighestScore, reportScore } from '../service/score';
-import { Action } from '@/declarative/action';
 
 type GameStatus = 'idle' | 'running' | 'pause' | 'over';
 
@@ -17,11 +21,11 @@ class SnackGameEvents {
   public readonly timeElapseEvent;
   public readonly directionChangeEvent;
 
-  public constructor(scope: Scope) {
-    this.eatFoodEvent = new EventRegistry<void>(scope);
-    this.gameStartEvent = new EventRegistry<void>(scope);
-    this.gameOverEvent = new EventRegistry<void>(scope);
-    this.timeElapseEvent = new EventRegistry<void>(scope);
+  public constructor() {
+    this.eatFoodEvent = new EventRegistry<void>();
+    this.gameStartEvent = new EventRegistry<void>();
+    this.gameOverEvent = new EventRegistry<void>();
+    this.timeElapseEvent = new EventRegistry<void>();
     this.directionChangeEvent = new EventRegistry<
       'up' | 'down' | 'left' | 'right'
     >();
@@ -58,10 +62,11 @@ class GameStatisticsModel {
   bestScore: AsyncMap<number, number>;
   updateBestScoreAction: Action<void>;
 
-  constructor(
-    _scope: Scope,
-    { eatFoodEvent, gameStartEvent, gameOverEvent }: SnackGameEvents,
-  ) {
+  constructor({
+    eatFoodEvent,
+    gameStartEvent,
+    gameOverEvent,
+  }: SnackGameEvents) {
     this.score = ReducedValue.builder<number>()
       .addReducer(eatFoodEvent, (score) => score + 1)
       .build(0);
@@ -104,16 +109,13 @@ class SnackGameModel {
   public readonly body: ReducedValue<[x: number, y: number][]>;
   public readonly foods: ReducedValue<[x: number, y: number][]>;
 
-  constructor(
-    _scope: Scope,
-    {
-      eatFoodEvent,
-      gameStartEvent,
-      gameOverEvent,
-      timeElapseEvent,
-      directionChangeEvent,
-    }: SnackGameEvents,
-  ) {
+  constructor({
+    eatFoodEvent,
+    gameStartEvent,
+    gameOverEvent,
+    timeElapseEvent,
+    directionChangeEvent,
+  }: SnackGameEvents) {
     // 判断两个方向是否是可以兼容的，比如说向上的时候不能向下，否则会直接撞自己而结束游戏
     function directionCompatible(prev: MoveDirection, next: MoveDirection) {
       return (
@@ -235,11 +237,20 @@ class SnackGameModel {
 }
 
 class SnackGameController implements ScopeDisposable {
-  public readonly scope = new Scope();
-  public readonly events = new SnackGameEvents(this.scope);
+  public static create(parentScope: Scope = Scope.global): SnackGameController {
+    const scope = new Scope(parentScope);
+    return scope.declareInside(() => new SnackGameController(scope));
+  }
 
-  public readonly statistics = new GameStatisticsModel(this.scope, this.events);
-  public readonly game = new SnackGameModel(this.scope, this.events);
+  public readonly scope: Scope;
+  public readonly events = new SnackGameEvents();
+
+  public readonly statistics = new GameStatisticsModel(this.events);
+  public readonly game = new SnackGameModel(this.events);
+
+  constructor(scope: Scope) {
+    this.scope = scope;
+  }
 
   [scopeDisposeSymbol](): void {
     this.scope[scopeDisposeSymbol]();

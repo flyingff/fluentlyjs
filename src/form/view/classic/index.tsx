@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import {
-  TodoListFormController,
-  TodoListFormControllerProvider,
+  ClassicTodoListFormController,
+  ClassicTodoListFormControllerProvider,
 } from './controller';
 
 import styles from './index.module.less';
-import { Button, Card, Divider, Space } from 'antd';
+import { Button, Card, Space } from 'antd';
 import { observer } from 'mobx-react-lite';
 import CreateFormModal from './component/CreateForm';
 import TodoListFilterView from './component/TodoFilter';
@@ -13,7 +13,7 @@ import TodoListView from './component/TodoList';
 import TodoListFooterView from './component/Footer';
 
 const TodoListOverall: React.FC = () => {
-  const [controller] = useState(() => new TodoListFormController());
+  const [controller] = useState(() => new ClassicTodoListFormController());
 
   // 视图包含以下内容：
   // 1. 一个用于显示待办事项列表的区域，每一个待办事项都有一个复选框，一个标题，一个描述，一个截止日期，一个checkbox用于标记是否完成，一个按钮用于删除
@@ -22,7 +22,7 @@ const TodoListOverall: React.FC = () => {
   // 4. 一个用于显示待办事项列表的统计信息的footer
 
   return (
-    <TodoListFormControllerProvider value={controller}>
+    <ClassicTodoListFormControllerProvider value={controller}>
       <div className={styles.wrapper}>
         <Card
           title="待办列表"
@@ -51,7 +51,7 @@ const TodoListOverall: React.FC = () => {
 
         <CreateFormModal />
       </div>
-    </TodoListFormControllerProvider>
+    </ClassicTodoListFormControllerProvider>
   );
 };
 

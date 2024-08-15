@@ -1,22 +1,17 @@
 import { makeAutoObservable } from 'mobx';
-import { TodoManagerModel } from '../model';
-import { TodoCreateItem, TodoItemFilter } from '../model/typings';
-import { PopupFormModal } from '../model/form';
-import { TransientValue } from '../model/display';
+import { TodoManagerModel } from '../../model';
+import { TodoCreateItem, TodoItemFilter } from '../../model/typings';
+import { PopupFormModal } from '../../model/form';
+import { TransientValue } from '../../model/display';
 import React from 'react';
 
-export class TodoListFormController {
+export class ModernTodoListFormController {
   readonly model: TodoManagerModel;
-
-  readonly displayFilter: TransientValue<TodoItemFilter>;
 
   readonly creatingForm: PopupFormModal<TodoCreateItem>;
 
   constructor() {
-    this.model = new TodoManagerModel();
-    this.displayFilter = new TransientValue<TodoItemFilter>(
-      this.model.appliedTodoListFilter,
-    );
+    this.model = TodoManagerModel.create();
     this.creatingForm = new PopupFormModal<TodoCreateItem>(
       this.model.addTodoItemAction,
     );
@@ -33,8 +28,10 @@ export class TodoListFormController {
     return action.isRunning ? action.arg?.[0] : undefined;
   }
 
-  applyFilter() {
-    this.model.events.updateFilterEvent.emitOnce(this.displayFilter.value);
+  updateFilter(value: Partial<TodoItemFilter>) {
+    const filter = this.model.appliedTodoListFilter;
+    const newFilter = { ...filter.value, ...value };
+    this.model.events.updateFilterEvent.emitOnce(newFilter);
   }
 
   refreshTodoList() {
@@ -50,16 +47,16 @@ export class TodoListFormController {
   }
 }
 
-const todoListControllerContext =
-  React.createContext<TodoListFormController | null>(null);
+const modernTodoListControllerContext =
+  React.createContext<ModernTodoListFormController | null>(null);
 
-export const useTodoListController = () => {
-  const controller = React.useContext(todoListControllerContext);
+export const useModernTodoListController = () => {
+  const controller = React.useContext(modernTodoListControllerContext);
   if (!controller) {
     throw new Error('Controller not found');
   }
   return controller;
 };
 
-export const TodoListFormControllerProvider =
-  todoListControllerContext.Provider;
+export const ModernTodoListFormControllerProvider =
+  modernTodoListControllerContext.Provider;

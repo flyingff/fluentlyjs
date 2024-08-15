@@ -1,15 +1,18 @@
-import { AsyncValue, EventRegistry } from '@/declarative';
+import {
+  Action,
+  AsyncMap,
+  EventRegistry,
+  ReducedValue,
+  Scope,
+} from 'fluentlyjs';
 import { TodoCreateItem, TodoItem, TodoItemFilter } from './typings';
-import { Scope } from '@/context';
-import { ReducedValue } from '@/declarative/reducer';
-import { AsyncMap } from '@/declarative/asyncMap';
+
 import {
   createTodoList,
   deleteTodoList,
   getTodoList,
   updateTodoList,
 } from '../service';
-import { Action } from '@/declarative/action';
 
 class TodoManagerEvents {
   readonly addTodoEvent: EventRegistry<TodoCreateItem>;
@@ -18,12 +21,12 @@ class TodoManagerEvents {
   readonly refreshTodoListEvent: EventRegistry<void>;
   readonly updateFilterEvent: EventRegistry<Partial<TodoItemFilter>>;
 
-  constructor(scope: Scope) {
-    this.addTodoEvent = new EventRegistry(scope);
-    this.deleteTodoEvent = new EventRegistry(scope);
-    this.toggleTodoEvent = new EventRegistry(scope);
-    this.refreshTodoListEvent = new EventRegistry(scope);
-    this.updateFilterEvent = new EventRegistry(scope);
+  constructor() {
+    this.addTodoEvent = new EventRegistry();
+    this.deleteTodoEvent = new EventRegistry();
+    this.toggleTodoEvent = new EventRegistry();
+    this.refreshTodoListEvent = new EventRegistry();
+    this.updateFilterEvent = new EventRegistry();
   }
 }
 
@@ -32,7 +35,12 @@ export const DEFAULT_TODO_LIST_FILTER: TodoItemFilter = {
 };
 
 export class TodoManagerModel {
-  readonly scope: Scope = new Scope();
+  public static create(parentScope: Scope = Scope.global) {
+    const scope = new Scope(parentScope);
+    return scope.declareInside(() => new TodoManagerModel(scope));
+  }
+
+  readonly scope: Scope;
 
   readonly events: TodoManagerEvents;
 
@@ -48,8 +56,9 @@ export class TodoManagerModel {
 
   readonly toggleTodoItemAction: Action<[id: string, complete: boolean]>;
 
-  constructor() {
-    this.events = new TodoManagerEvents(this.scope);
+  protected constructor(scope: Scope) {
+    this.scope = scope;
+    this.events = new TodoManagerEvents();
     this.displayTodoList = new AsyncMap(
       () => this.appliedTodoListFilter,
       (filter) => {

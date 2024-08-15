@@ -89,7 +89,7 @@ const SnackGridView = observer(
 );
 
 const SnackGameView: React.FC = () => {
-  const [controller] = useState(() => new SnackGameController());
+  const [controller] = useState(() => SnackGameController.create());
   const status = controller.statistics.status.value;
 
   useEffect(() => {
