@@ -6,8 +6,8 @@ import { pluginTypeDoc } from '@rspress/plugin-typedoc';
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
-  title: 'DataFlow.js',
-  description: 'A ergonomics programming experience',
+  title: 'Fluently.js',
+  description: '一种面向人类思考方式的编程模式',
   icon: '/rspress-icon.png',
   logo: {
     light: '/rspress-light-logo.png',
@@ -29,7 +29,7 @@ export default defineConfig({
       {
         icon: 'github',
         mode: 'link',
-        content: 'https://github.com/web-infra-dev/rspress',
+        content: 'https://github.com/flyingff/fluentlyjs',
       },
     ],
   },

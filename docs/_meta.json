@@ -1,11 +1,16 @@
 [
   {
-    "text": "Architecture",
+    "text": "入门指南",
+    "link": "/guide/index",
+    "activeMatch": "/guide/"
+  },
+  {
+    "text": "架构体系",
     "link": "/architecture/overview",
     "activeMatch": "/architecture/"
   },
   {
-    "text": "Examples",
+    "text": "示例",
     "link": "/example/form",
     "activeMatch": "/example/"
   }
