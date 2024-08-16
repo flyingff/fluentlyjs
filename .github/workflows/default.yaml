@@ -54,6 +54,13 @@ jobs:
           yarn build
         env:
           STATIC_PATH: '/'
+      - name: Upload OSS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oss-pages
+          path: dist/
+          retention-days: 1
+
       - name: Upload Github Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -84,6 +91,11 @@ jobs:
     needs: build
     if: ${{ ! failure() }}
     steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: oss-pages
+          path: dist/
       - name: Upload to oss
         id: upload_to_oss
         uses: JohnGuan/oss-upload-action@v1.0.2
