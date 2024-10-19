@@ -1,17 +1,22 @@
 [
   {
-    "text": "入门指南",
+    "text": "guide",
     "link": "/guide/index",
     "activeMatch": "/guide/"
   },
   {
-    "text": "架构体系",
+    "text": "architecture",
     "link": "/architecture/overview",
     "activeMatch": "/architecture/"
   },
   {
-    "text": "示例",
-    "link": "/example/form",
+    "text": "example",
+    "link": "/example/todo",
     "activeMatch": "/example/"
+  },
+  {
+    "text": "API",
+    "link": "/api/index",
+    "activeMatch": "/api/"
   }
 ]

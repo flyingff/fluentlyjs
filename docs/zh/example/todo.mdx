@@ -1,0 +1,147 @@
+import FormDemoClassic from '@/form/view/classic';
+import FormDemoModern from '@/form/view/modern';
+
+# TodoList
+
+表单是大家都会用到的东西，太正常不过了。
+
+而我们所需要的就是用尽量简单的手段，实现这些本质上相同的表单/类表单需求。
+
+由于表单本身所承载的业务逻辑是给定的，其逻辑上的复杂度是固定不变的，因此我们无法将一个支持增删改查的表单页面变
+得简单。但我们可以通过提高代码的复用度，让需求不尽相同的表单也可以使用相同的内核，避免对这部分逻辑进行重复开发，
+达到简化表单开发的目标。
+
+那么，对这个抽象表单的建模水平，将决定它的适用范围和逻辑覆盖。下面我们来尝试进行一个抽象。
+
+## CRUD页面模型
+
+对于一个抽象类型的表单，我们可以定义这个抽象表单所具有的属性和事件。
+
+
+下面是一个抽象的代码：
+
+```ts
+import {
+  Action,
+  AsyncMap,
+  EventRegistry,
+  ReducedValue,
+  Scope,
+} from 'fluentlyjs';
+import { TodoCreateItem, TodoItem, TodoItemFilter } from './typings';
+
+import {
+  createTodoList,
+  deleteTodoList,
+  getTodoList,
+  updateTodoList,
+} from '../service';
+
+class TodoManagerEvents {
+  readonly addTodoEvent: EventRegistry<TodoCreateItem>;
+  readonly deleteTodoEvent: EventRegistry<string>;
+  readonly toggleTodoEvent: EventRegistry<[id: string, complete: boolean]>;
+  readonly refreshTodoListEvent: EventRegistry<void>;
+  readonly updateFilterEvent: EventRegistry<Partial<TodoItemFilter>>;
+
+  constructor() {
+    this.addTodoEvent = new EventRegistry();
+    this.deleteTodoEvent = new EventRegistry();
+    this.toggleTodoEvent = new EventRegistry();
+    this.refreshTodoListEvent = new EventRegistry();
+    this.updateFilterEvent = new EventRegistry();
+  }
+}
+
+export const DEFAULT_TODO_LIST_FILTER: TodoItemFilter = {
+  queryAt: Date.now(),
+};
+
+export class TodoManagerModel {
+  public static create(parentScope: Scope = Scope.global) {
+    const scope = new Scope(parentScope);
+    return scope.declareInside(() => new TodoManagerModel(scope));
+  }
+
+  readonly scope: Scope;
+
+  readonly events: TodoManagerEvents;
+
+  // 当前展示的待办事项列表
+  readonly displayTodoList: AsyncMap<TodoItemFilter, TodoItem[]>;
+
+  // 当前生效的待办事项列表的过滤条件
+  readonly appliedTodoListFilter: ReducedValue<TodoItemFilter>;
+
+  readonly deleteTodoItemAction: Action<string>;
+
+  readonly addTodoItemAction: Action<TodoCreateItem, string>;
+
+  readonly toggleTodoItemAction: Action<[id: string, complete: boolean]>;
+
+  protected constructor(scope: Scope) {
+    this.scope = scope;
+    this.events = new TodoManagerEvents();
+    this.displayTodoList = new AsyncMap(
+      () => this.appliedTodoListFilter,
+      (filter) => {
+        return getTodoList(filter);
+      },
+      [],
+    );
+
+    this.appliedTodoListFilter = ReducedValue.builder<TodoItemFilter>()
+      .addReducer(this.events.updateFilterEvent, (state, filter) => {
+        return {
+          ...state,
+          ...filter,
+          queryAt: Date.now(),
+        };
+      })
+      .addReducer(this.events.refreshTodoListEvent, (state) => {
+        return {
+          ...state,
+          queryAt: Date.now(),
+        };
+      })
+      .build(DEFAULT_TODO_LIST_FILTER);
+
+    this.deleteTodoItemAction = new Action((id) => deleteTodoList(id));
+    this.deleteTodoItemAction.triggersDoneEvent(
+      this.events.refreshTodoListEvent,
+    );
+    this.deleteTodoItemAction.runOn(this.events.deleteTodoEvent, (it) => it);
+
+    this.addTodoItemAction = new Action(async (item) => {
+      const itemId = await createTodoList(item);
+      return { data: '', result: !!itemId };
+    });
+    this.addTodoItemAction.triggersDoneEventWithMapper(
+      this.events.refreshTodoListEvent,
+      () => undefined,
+    );
+    this.addTodoItemAction.runOn(this.events.addTodoEvent, (it) => it);
+
+    this.toggleTodoItemAction = new Action(([id, completed]) => {
+      return updateTodoList(id, { completed });
+    });
+    this.toggleTodoItemAction.triggersDoneEvent(
+      this.events.refreshTodoListEvent,
+    );
+    this.toggleTodoItemAction.runOn(this.events.toggleTodoEvent, (it) => it);
+  }
+}
+
+```
+
+## 传统表单
+
+一看就是个表单嘛。典型的CRUD场景。
+
+<FormDemoClassic />
+
+## 现代表现
+
+虽然看着不像传统表单界面，但是它的交互形式、数据流向等均与传统表单相同。上面构建的模型改都不用改，就可以直接复用大部分的业务逻辑，向“尽量复用”的目标迈出了一步。
+
+<FormDemoModern />

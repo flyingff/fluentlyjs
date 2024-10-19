@@ -25,4 +25,4 @@ dist-ssr
 doc_build
 
 # auto-generated document, do not modify or submit 
-docs/api
+docs/*/api

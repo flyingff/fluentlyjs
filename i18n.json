@@ -1,0 +1,14 @@
+{
+  "guide": {
+    "en": "Getting Started",
+    "zh": "入门指南"
+  },
+  "architecture": {
+    "en": "Architecture",
+    "zh": "架构体系"
+  },
+  "example": {
+    "en": "Example",
+    "zh": "示例"
+  }
+}

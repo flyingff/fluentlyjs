@@ -1,0 +1,147 @@
+---
+pageType: custom
+sidebar: false
+outline: false
+footer: false
+---
+
+import { HomeHero, HomeFeature } from 'rspress/theme';
+
+<HomeHero
+  routePath="/"
+  frontmatter={{
+    hero: {
+      name: '<img src="/logo-2x.png" alt="logo" style="user-select: none; max-width: min(600px, 80vw)" >',
+      text: '为人类编程设计\n的编程模式',
+      tagline: '顺畅的思维，带来流畅的编程体验',
+      actions: [
+        {
+          theme: 'brand',
+          text: '入门指南',
+          link: '/guide/',
+        },
+        {
+          theme: 'alt',
+          text: '系统架构',
+          link: '/architecture/overview.html',
+        },
+      ],
+    },
+    features: [],
+  }}
+/>
+
+<HomeFeature
+  routePath="/"
+  frontmatter={{
+    features: [
+      {
+        title: '逻辑正确性',
+        details:
+          'fluently.js使用精挑细选的基础概念，让系统架构在稳定的逻辑基石之上',
+        icon: '💡',
+        span: 2,
+      },
+      {
+        title: '时序无关性',
+        details:
+          'fluently.js能最大限度避免思考时序问题，将宝贵的思维用在业务开发上',
+        icon: '⏰',  span: 2,
+      },
+      {
+        title: '测试完备性',
+        details: 'fluently.js使用声明式思维进行开发，可以轻易获得逻辑覆盖率',
+        icon: '🧪',  span: 2,
+      },
+      {
+        title: '调试便利性',
+        details: 'fluently.js配有图形化的开发调试工具，让你快速理解系统',
+        icon: '🐞',  span: 2,
+      },
+    ],
+
+}}
+/>
+
+<center>
+  <h2
+    style={{
+      fontSize: '3rem',
+      fontWeight: 'bold',
+      marginTop: '4rem',
+    }}
+  >
+    设计哲学
+  </h2>
+  <h3
+    style={{
+      color: 'var(--rp-c-text-2)',
+      textAlign: 'center',
+      maxWidth: '48rem',
+      margin: '2rem 1.5rem 1.75rem',
+      fontSize: '1.125rem',
+    }}
+  >
+    fluently.js在设计和开发时追求它的定位，在指导方向上持续前进
+  </h3>
+</center>
+
+<HomeFeature
+  routePath="/"
+  frontmatter={{
+    features: [
+      {
+        title: '数据流编程模型',
+        details:
+          'fluently.js的核心是数据流编程模型，通过提炼核心概念，让开发者专注于逻辑表达，无需关注数据流的细节。',
+        icon: '🌊',
+      },
+      {
+        title: '声明式',
+        details:
+          'fluently.js是一个声明式的框架，通过其设计哲学，让开发者远离时序、同步、异步等复杂的问题。',
+        icon: '📜',
+      },
+      {
+        title: '易用',
+        details:
+          'fluently.js的设计目标是易用，为常见操作量身定制了标准的最佳实践，让开发者迅速“共脑”。',
+        icon: '🛠',
+      },
+      {
+        title: '可扩展',
+        details:
+          'fluently.js的模块是可组合的，可以通过简单的组合来实现复杂的功能，也能安装（第三方）插件来扩展功能。',
+        icon: '🧩',
+      },
+      {
+        title: '生态友好',
+        details:
+          'fluently.js是一个专注于数据解决方案的框架，可以与其他框架、库、工具协同工作，例如React、Vue等视图框架。',
+        icon: '🌍',
+      },
+      {
+        title: '面向未来',
+        details:
+          'fluently.js的API设计考虑到了对AI工具、低代码工具等高生产力工具的支持，可以帮助开发者更好地应对未来的挑战。',
+        icon: '🚀',
+      },
+    ],
+  }}
+/>
+
+<div style={{ height: '80px' }} />
+
+<p
+  style={{
+    padding: '2rem',
+    textAlign: 'center',
+    borderTop: '1px solid var(--rp-c-divider-light)',
+    marginTop: '3rem',
+    color: 'var(--rp-c-text-2)',
+    fontSize: '.875rem',
+    lineHeight: '1.25rem',
+  }}
+>
+  © 2024 ff@flyingff.net. All Rights Reserved.
+</p>

@@ -2412,10 +2412,10 @@ flexsearch@0.7.43:
   resolved "https://registry.npmmirror.com/flexsearch/-/flexsearch-0.7.43.tgz#34f89b36278a466ce379c5bf6fb341965ed3f16c"
   integrity sha512-c5o/+Um8aqCSOXGcZoqZOm+NqtVwNsvVpWv6lfmSclU954O3wvQKxxK8zj74fPaSJbXpSLTs4PRhh+wnoCXnKg==
 
-fluentlyjs@^0.1.0-SNAPSHOT0:
-  version "0.1.0-SNAPSHOT0"
-  resolved "https://registry.npmmirror.com/fluentlyjs/-/fluentlyjs-0.1.0-SNAPSHOT0.tgz#95e191defe625a52f508c7548844b261f9c51055"
-  integrity sha512-9zi3J/WwfH1sOidOmVMX134J7SnyuRTya2Js9b6dMimKIAPnf89+0uBCXu84fTZ0OJ/sGmaiHmQeC4hWBc/aqQ==
+fluentlyjs@0.1.0-SNAPSHOT1:
+  version "0.1.0-SNAPSHOT1"
+  resolved "https://registry.npmmirror.com/fluentlyjs/-/fluentlyjs-0.1.0-SNAPSHOT1.tgz#ec9774d197040d2406d19deac473835d10f9a278"
+  integrity sha512-njdI14vKYSVhOJzJXs1nsagQfS1rTiaDMjZEHzsncue5wNhEO8IJjdvIlRSOAIYJJpKhTcMcTdW2loZlaBQ6vQ==
   dependencies:
     mobx "^6.13.1"
 

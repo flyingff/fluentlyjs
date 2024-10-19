@@ -1,0 +1,22 @@
+[
+  {
+    "text": "guide",
+    "link": "/guide/index",
+    "activeMatch": "/guide/"
+  },
+  {
+    "text": "architecture",
+    "link": "/architecture/overview",
+    "activeMatch": "/architecture/"
+  },
+  {
+    "text": "example",
+    "link": "/example/form",
+    "activeMatch": "/example/"
+  },
+  {
+    "text": "API",
+    "link": "/zh/api/index",
+    "activeMatch": "/api/"
+  }
+]
