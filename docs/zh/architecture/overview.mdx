@@ -1,0 +1,224 @@
+# 核心概念
+
+fluently.js 的核心部分包括一组简单的概念，这些概念是构建程序的基础。其他概念都是基于这些核心概念构建的。
+
+我们致力于保证这些核心概念的简单性和一致性，以便于开发者理解和使用。在使用它们时，库会为开发者处理复杂的数据流细节，使开发者能够专注于逻辑表达。
+
+接下来我们来介绍这些核心概念。
+
+## 作用域 Scope
+
+Scope表示各种对象生效的范围，是一个空间上的和时间上的概念。
+
+例如，一个函数的作用域是函数内部，一个对象的作用域是对象内部，一个模块的作用域是模块内部，这是空间上的作用域；而对于一个承载了一系列在时序上有关联的事件的对象，我们可以认为这个对象在时间的作用域是从诞生事件（create / open / mounted）产生开始，到释放（dispose / closed / unmounted）事件结束，这是时间上的作用域，就像React组件拥有生命周期一样。
+
+为什么需要显示地定义作用域？其目标是为了让开发者更好地理解程序的生命周期，以及更好地控制程序的生命周期。相对于隐式的作用域，显示的作用域由于存在明确的生命周期，更容易被理解和控制。而且，显示的作用域可以让相同（或者在继承关系上有共同父类）的作用域对象作用在不同的客体上，让代码具有一致性，也更容易被复用。
+
+在fluently.js中，作用域被实现为`Scope`类，它具有三个功能：
+
+1. 定义对象的生命周期。Scope对象可以拥有一个Lifecycle对象，用于控制Scope的生命周期。Lifecycle对象默认包含最基本的生命周期事件，即失效事件（dispose）。
+2. 提供一个简单的DI容器。Scope内的对象可以通过类似`scope.get(xxx)`的方式以名称或者类型获取其他对象，实现对象之间的依赖注入。
+3. 组织模块的结构。Scope按照作用域树的方式组织（`parent`引用），形成一个作用域树。这样可以通过父作用域控制子作用域的生命周期，避免意料之外的副作用；也可以通过子作用域访问父作用域的对象，实现对象的共享。
+
+默认全局作用域是`Scope.global`，它是所有作用域的根节点，所有作用域都直接或间接是`Scope.global`的子节点。它的生命周期与程序的生命周期一致，是程序的根作用域。
+
+## 事件源 EventRegistry
+
+事件在fluently.js中表示一次程序状态的更新，它是程序状态变更的根本原因和基本单位。
+
+事件源对象被称为`EventRegistry`，它表示在未来时间上可能会发生的同一类事件的集合。这个概念有点类似于`EventEmitter`，但是更加强调“同一类事件”的概念，而不是单纯的事件监听。也就是说，以“按钮A被点击”事件为例，那么`EventRegistry`就是“按钮A被点击”这个事件的抽象集合，而每一次“按钮A被点击”就一个具体事件。无论用户是否已经点击了按钮A，`EventRegistry`都应当一直存在，而具体的事件则是在用户点击按钮A的时候才会产生。
+
+更具体地讲，`EventRegistry`在设计上被用于表示一个有业务意义的事件，例如“提交订单”、“发送当前消息”等。在UI界面被创建出来之前，事件源的定义就已经存在，无关于在UI上，用户以何种方式触发了这个事件。而当创建出UI界面之后，我们可以将这个事件源与UI界面的特定触发方式绑定，以便于用户触发这个事件。这一点与传统事件思维产生于交互的思考方向是不同的，需要仔细品味。
+
+`EventRegistry`类所承载的功能相对单一，即：
+
+1. 提供触发一次事件的方法`emitOnce`，用于触发一次事件。
+2. 提供监听事件的方法`listen`，用于监听事件的发生。注意，在fluently.js中，用户不应直接监听事件，而是使用其他具有语义的对象消费事件。这些在稍后我们就能看到。
+3. 生命周期管理。`EventRegistry`需要绑定至一个`Scope`对象，当`Scope`对象失效时，`EventRegistry`不会再触发事件。
+
+## 状态 ReducedValue
+
+在fluently.js中，状态本身的概念没有发生变化，它仍然表示程序的当前状态。但是，状态的管理方式发生了变化。
+
+与使用“赋值/取值”方式管理状态不同，fluently.js使用`ReducedValue`对象来管理状态。`ReducedValue`对象表示一个由事件序列定义的状态。它的核心思想是，状态的变更是由事件的发生引起的，而不应当由某处赋值引起的。这样，状态的变更将变得更加可控，更加可预测。这与一些框架，如Redux，有一定的相似之处。
+
+以实现一个简单计数器为例，我们需要先定义让状态变更的事件源：
+
+```javascript title="定义事件源"
+const incrementEvent = new EventRegistry<void>(Scope.global);
+const resetEvent = new EventRegistry<void>(Scope.global);
+```
+
+然后，我们定义一个`ReducedValue`对象，用于管理计数器的状态：
+
+```javascript title="定义状态"
+const counter = ReducedValue.builder()
+  // 当incrementEvent发生时，计数器加1
+  .addReducer(incrementEvent, (value, event) => value + 1)
+  // 当resetEvent发生时，计数器重置为0
+  .addReducer(resetEvent, (value, event) => 0)
+  // 初始值为0
+  .build(0);
+```
+
+最后，我们可以将`ReducedValue`对象的值绑定到一个输出方式上，例如：
+
+```javascript title="输出状态"
+// 使用mobx提供的autorun方法，当counter的值发生变化时，输出当前值
+// 更多关于mobx的内容，请参考后续依赖和mobx的文档
+autorun(() => {
+  console.log(`current counter value: ${counter.value}`);
+});
+```
+
+这样，当触发`incrementEvent`事件时，计数器的值会加1；当触发`resetEvent`事件时，计数器的值会重置为0。这种方式下，状态的变更是由事件的发生引起的，而不是由某处赋值引起的。
+
+```javascript title="触发事件"
+incrementEvent.emitOnce();
+// 输出：current counter value: 1
+
+incrementEvent.emitOnce();
+// 输出：current counter value: 2
+
+resetEvent.emitOnce();
+// 输出：current counter value: 0
+```
+
+## 映射 Computed / AsyncMap
+
+在fluently.js中，映射是一种定义“被动”状态的方式。它表示一个状态的计算结果，这个计算结果是由其他状态的变更引起的。映射的计算结果是惰性的，只有在需要时才会计算。
+
+映射有两种类型：`Computed`和`AsyncMap`。`Computed`表示同步计算的映射，而`AsyncMap`表示异步计算的映射。
+
+在fluently.js中，映射的定义方式与状态的定义方式类似。以`Computed`为例，我们可以定义一个计算状态的映射：
+
+```javascript title="定义映射"
+// 使用mobx提供的computed方法，定义一个计算状态的映射
+const doubleCounter = computed(() => counter.value * 2);
+
+autorun(() => {
+  console.log(`current doubleCounter value: ${doubleCounter.get()}`);
+});
+```
+
+这样，当`counter`的值发生变化时，`doubleCounter`的值会自动更新。
+
+但是，`Computed`只能处理同步计算的情况。对于异步计算的情况，我们可以使用`AsyncMap`：
+
+```javascript title="定义异步映射"
+const asyncDoubleCounter = new AsyncMap(
+  // 以getter的形式传入输入状态，当输入状态发生变化时，会触发计算函数
+  // 需要是可观察的状态，例如ReducedValue或者其他observable
+  // 此处可以接受ReducedValue对象，或者AsyncMap对象
+  () => counter,
+  // 计算函数
+  async (counterValue) => {
+    // 模拟异步计算
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return counterValue * 2;
+  },
+  // 初始值
+  0,
+  // 全局作用域
+  Scope.global,
+);
+
+autorun(() => {
+  console.log(`current asyncDoubleCounter value: ${asyncDoubleCounter.value}`);
+});
+```
+
+这样，当`counter`的值发生变化时，`asyncDoubleCounter`的值会在1s之后自动更新。需要注意的是，`AsyncMap`的计算是懒惰的，只有在观察者存在时才会计算。在本例中，`asyncDoubleCounter`的值只有在`autorun`观察者存在时才会计算。如果没有观察者存在，`asyncDoubleCounter`的mapper函数将不会被调用；如果后续添加了观察者，mapper函数将在观察者添加时被调用。
+
+ReducedValue和AsyncMap可以组合使用，上述示例已经展示了一些情况，下面将展示更多的组合方式。
+
+```javascript title="组合使用"
+// 此示例演示如何将AsyncMap的值放入ReducedValue中
+
+const someEvent = new EventRegistry() < number > Scope.global;
+const reducerFromAsyncDoubleCounter = ReducedValue.builder()
+  .addReducer(someEvent, (value, event) => event)
+  .build(0);
+
+function putAsyncMapValueIntoReducer() {
+  someEvent.emitOnce(asyncDoubleCounter.value);
+}
+
+// 同理，可以将ReducedValue的值放入另一个ReducedValue中
+function putReducerValueIntoReducer() {
+  someEvent.emitOnce(counter.value);
+}
+```
+
+可能读者已经发现，`ReducedValue`和`AsyncMap`的组合方式是非常灵活的，可以根据实际情况进行组合；但对状态进行赋值的动作，依然需要靠事件来触发，以保证状态变更的可控性。
+
+## 动作 Action
+
+除去事件和状态，动作是fluently.js中的另一个核心概念。动作表示对程序状态以外的其他操作，例如网络请求、文件读写等。动作是一种有副作用的操作，它不应当直接影响状态，因此被单独抽象出来。
+
+动作类`Action`在定义时需要指定动作执行时的回调函数，但不会包括动作触发的逻辑。动作的触发需要通过绑定事件来实现。每当事件到来时，动作会被执行。
+
+```javascript title="使用动作"
+
+// 定义一个动作，用于模拟点赞操作
+const postLikeAction = new Action(
+  // 动作执行的回调函数
+  async (postId: number) => {
+    // 模拟网络请求
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log(`post ${postId} liked`);
+  },
+  // 全局作用域
+  Scope.global,
+);
+
+// 定义事件源
+const likeEvent = new EventRegistry<number>(Scope.global);
+
+// 绑定事件源和动作
+likeEvent.runOn(postLikeAction, it => it);
+
+```
+
+`Action`对象内部还包括了对动作生命周期相关的控制，例如：
+
+1. 动作拥有状态，包括`initial`、`running`、`success`、`failed`等状态，用于表示动作的执行状态。视图可以根据动作的状态来展示不同的UI。
+2. 动作可以绑定完成事件，当动作执行完成时，会触发完成事件。
+
+读者可能已经发现，动作和事件是“间隔”出现的。在设计上，一个事件可以触发多个动作，一个动作也可以绑定多个事件。但是，动作不能直接触发另外一个动作，也不能修改状态，这些功能必须通过事件来触发。这样的设计保证了事件是程序状态变更的根本原因，而动作是对状态变更的响应。在调试时，通过回顾事件的发生顺序，可以清晰地了解状态的变更原因和动作触发的逻辑，避免程序走向混乱。
+
+## 观察者 Observer
+
+观察者是一个广泛应用的概念，它表示对某个对象的变化感兴趣的对象。在fluently.js中，观察者是指状态的消费者。
+
+在现代前端框架中，UI状态是内部状态的映射，因此UI组件，例如React组件，天然是状态的观察者。
+
+在fluently.js中，我们使用了mobx作为观察者模式的实现。mobx提供了`autorun`、`reaction`等方法，同时对React、Vue等框架提供了高阶函数等工具，使得状态的变更能够自动触发UI的更新。
+
+```tsx title="使用观察者"
+const CounterView: React.FC = () => {
+  // 取出计数器的值
+  const counterValue = counter.value;
+
+  return (
+    <div>
+      <div>current counter value: {counterValue}</div>
+      <button onClick={() => incrementEvent.emitOnce()}>increment</button>
+      <button onClick={() => resetEvent.emitOnce()}>reset</button>
+    </div>
+  );
+};
+
+// 使用mobx提供的observer方法，将React组件转换为观察者
+export default observer(CounterView);
+```
+
+## 小结
+
+flutenly.js整体架构就是由这些核心概念组成的。这些概念之间的关系如下图所示：
+
+<center>![overview](/illustration/arch/relation.drawio.svg)</center>
+
+根据前文的表述，事件源是状态变更的根本原因，状态是程序的当前状态，映射是状态的计算结果，动作是对状态变更的响应，观察者是状态的消费者。这些概念之间的关系是相对清晰的，每个概念都有自己的职责，相互之间的关系也是相对独立的。
+
+让我们从图的左边开始向右看，程序的起点在于事件源，之后事件转化为多种状态，最后状态被观察者和动作消费。消费者又可以通过产生事件完成下一轮程序的动作，构成程序的循环。这是一个典型的数据流的过程，也是fluently.js的核心思想。
