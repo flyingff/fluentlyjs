@@ -12,8 +12,6 @@ export class EventRegistry<EventType> implements Scoped {
 
   private readonly emitter: EventEmitter = new EventEmitter();
 
-  private readonly companionTriggers: ((event: EventType) => void)[] = [];
-
   public constructor(scope: Scope = Scope.requiredCurrent) {
     this.scope = scope;
   }
@@ -29,7 +27,8 @@ export class EventRegistry<EventType> implements Scoped {
   };
 
   [scopeDisposeSymbol](): void {
-    throw new Error('Method not implemented.');
+    // remove all listeners to avoid memory leak
+    this.emitter.removeAllListeners();
   }
 
   /**
@@ -89,17 +88,44 @@ export class EventRegistry<EventType> implements Scoped {
 
   /**
    * 监听事件
-   * 这个方法主要处理scope销毁的情况，当scope销毁时，结束监听事件
+   *
+   * 这个方法可以将事件以流的方式返回，当scope销毁时，这个方法会自动退出
+   *
+   * 同时，这个方法也支持传入其它的disposer，当disposer中的任意一个触发时，这个方法也会退出
+   *
+   * @argument disposers 可以传入Promise、AbortSignal、Scope实例
    */
-  public async *listen() {
-    const generator = this.generatorFactory();
-    const scopeDisposePromise = this.scope.lifecycle.asPromise;
+  public async *listen(...disposers: (Promise<void> | AbortSignal | Scope)[]) {
+    let disposed = false;
 
-    while (!this.scope.disposed) {
+    const scopeDisposePromises = [
+      this.scope.lifecycle.asPromise,
+      ...disposers,
+    ].map(promise => {
+      if (promise instanceof Promise) {
+        return promise;
+      } else if (promise instanceof AbortSignal) {
+        return new Promise<void>(resolve => {
+          promise.addEventListener('abort', () => resolve());
+        });
+      } else {
+        return promise.lifecycle.asPromise;
+      }
+    });
+
+    const scopeDisposePromise = Promise.race(scopeDisposePromises);
+
+    scopeDisposePromise.then(() => {
+      disposed = true;
+    });
+
+    const generator = this.generatorFactory();
+    // eslint-disable-next-line no-unmodified-loop-condition
+    while (!disposed) {
       const eventPromise = generator.next();
       const result = await Promise.race([scopeDisposePromise, eventPromise]);
       // 这里只有两种情况，一种是scope销毁，一种是事件触发
-      if (this.scope.disposed || !result || !('value' in result)) {
+      if (disposed || !result || !('value' in result)) {
         break;
       } else {
         const { value, done } = result;
@@ -111,20 +137,6 @@ export class EventRegistry<EventType> implements Scoped {
         yield value;
       }
     }
-  }
-
-  /**
-   * 尽量不要在业务代码中使用这个方法，尽量使用Action类的实例来触发动作
-   */
-  public triggerAction(action: (event: EventType) => void) {
-    this.emitter.on('event', action);
-    return () => {
-      this.emitter.off('event', action);
-    };
-  }
-
-  public triggerCompanion(companion: (event: EventType) => void) {
-    this.companionTriggers.push(companion);
   }
 }
 

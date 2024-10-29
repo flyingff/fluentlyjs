@@ -23,21 +23,23 @@ export interface AsyncMapState<RESULT> {
 
 // 这个类的作用是将一个异步函数的返回值转换为一个AsyncValue对象
 // 可以用来实现例如异步IO、异步计算等功能
-export class AsyncMap<INPUT, RESULT> implements AsyncErrorValue<RESULT> {
-  private readonly input: GetterOf<AsyncValue<INPUT>>;
+export class AsyncMap<InputType, MappedType>
+  implements AsyncErrorValue<MappedType>
+{
+  private readonly input: GetterOf<AsyncValue<InputType>>;
 
-  private readonly mapper: MapperOf<[INPUT], Promise<RESULT>>;
+  private readonly mapper: MapperOf<[InputType], Promise<MappedType>>;
 
   private readonly scope: Scope;
 
-  private state: AsyncMapState<RESULT>;
+  private state: AsyncMapState<MappedType>;
 
   private reactionDisposer: (() => void) | null = null;
 
   public constructor(
-    input: GetterOf<AsyncValue<INPUT>>,
-    mapper: MapperOf<[INPUT], Promise<RESULT>>,
-    initialVal: RESULT | typeof unresolvedFlag = unresolvedFlag,
+    input: GetterOf<AsyncValue<InputType>>,
+    mapper: MapperOf<[InputType], Promise<MappedType>>,
+    initialVal: MappedType | typeof unresolvedFlag = unresolvedFlag,
     scope = Scope.requiredCurrent,
   ) {
     this.input = input;
@@ -146,7 +148,7 @@ export class AsyncMap<INPUT, RESULT> implements AsyncErrorValue<RESULT> {
     };
   }
 
-  private setValue(value: RESULT) {
+  private setValue(value: MappedType) {
     this.state = {
       error: null,
       errored: false,
@@ -165,7 +167,7 @@ export class AsyncMap<INPUT, RESULT> implements AsyncErrorValue<RESULT> {
     };
   }
 
-  private async updateValue(value: INPUT) {
+  private async updateValue(value: InputType) {
     this.setMapping();
     try {
       const newValue = await this.mapper(value);

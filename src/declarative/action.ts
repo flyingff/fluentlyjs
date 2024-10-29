@@ -32,6 +32,7 @@
 import { action, computed, makeObservable, observable } from 'mobx';
 import { EventRegistry } from './event';
 import { Scope } from '@/context';
+import { createPromiseResolver } from '@/util/promise';
 
 type ActionResultType = void | boolean;
 
@@ -183,19 +184,45 @@ export class Action<ARG, DATA = void> {
     }
   }
 
+  /**
+   * 将当前的Action与一个事件关联起来。当事件触发时，将执行此Action。
+   *
+   * @param eventRegistry 事件注册器
+   * @param mapper 事件到Action参数的映射函数
+   * @param filter 事件过滤函数，返回false表示不执行Action
+   * @returns 取消函数
+   */
   public runOn<EVENT>(
-    event: EventRegistry<EVENT>,
+    eventRegistry: EventRegistry<EVENT>,
     mapper: (event: EVENT) => ARG,
     filter?: (event: EVENT) => boolean,
   ) {
-    return event.triggerAction(event => {
-      // 如果filter存在，且filter返回false，则不执行
-      if (filter && !filter(event)) {
-        return;
+    const disposer = createPromiseResolver<void>();
+
+    (async () => {
+      for await (const event of eventRegistry.listen(disposer.promise)) {
+        // 如果filter存在，且filter返回false，则不执行
+        if (filter && !filter(event)) {
+          return;
+        }
+        const args = mapper(event);
+        // 此处this.run将cast为any是因为run方法的参数做了类型判断，但此处无法判断
+        (this.run as any)(args);
       }
-      const args = mapper(event);
-      // 此处this.run将cast为any是因为run方法的参数做了类型判断，但此处无法判断
-      (this.run as any)(args);
+    })();
+
+    return () => disposer.resolve();
+  }
+
+  public triggersDoneEventWithMapper<EVENT>(
+    eventSource: EventRegistry<EVENT>,
+    mapper: (data: DATA, arg: ARG) => EVENT,
+    condition?: (data: DATA) => boolean,
+  ) {
+    this.eventSuccessTriggers.push((data, arg) => {
+      if (!condition || condition(data)) {
+        eventSource.emitOnce(mapper(data, arg));
+      }
     });
   }
 
@@ -218,18 +245,6 @@ export class Action<ARG, DATA = void> {
     this.eventFailedTriggers.push((reason, arg) => {
       if (!condition || condition(reason)) {
         eventSource.emitOnce(mapper(reason, arg));
-      }
-    });
-  }
-
-  public triggersDoneEventWithMapper<EVENT>(
-    eventSource: EventRegistry<EVENT>,
-    mapper: (data: DATA, arg: ARG) => EVENT,
-    condition?: (data: DATA) => boolean,
-  ) {
-    this.eventSuccessTriggers.push((data, arg) => {
-      if (!condition || condition(data)) {
-        eventSource.emitOnce(mapper(data, arg));
       }
     });
   }

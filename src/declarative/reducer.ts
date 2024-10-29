@@ -2,16 +2,42 @@ import { computed, makeObservable, observable, runInAction } from 'mobx';
 import { AsyncValue } from './async';
 import { EventRegistry } from './event';
 
-export interface ValueReducer<EVENT, T> {
-  reducer: (value: T, event: EVENT) => T;
-  eventSource: EventRegistry<EVENT>;
+/**
+ * 表示一个事件和它的reducer函数，表达了如何将一个“事件”转换为一个“值的变化”。
+ *
+ * 一般不需要直接创建实现该接口的对象，而是使用 {@link ReducedValueBuilder} 或者 {@link ReducedValue.builder} 。
+ */
+export interface ValueReducer<EventValueType, T> {
+  reducer: (value: T, event: EventValueType) => T;
+  eventSource: EventRegistry<EventValueType>;
 }
 
+/**
+ * 将一系列事件转换为一个值的变化的对象，就像redux那样。
+ *
+ * 这应当是修改“状态”的唯一途径，所有状态的变化都应当通过这个对象来完成。
+ *
+ * 触发状态变化需要配合“事件” {@link EventRegistry} 来完成。
+ *
+ * 注意：一般不要使用默认构造函数，而是使用 {@link ReducedValue.builder} 来构建ReducedValue对象。
+ */
 export class ReducedValue<T> implements AsyncValue<T> {
+  /**
+   * 通过builder模式创建一个ReducedValue对象。
+   */
   public static builder<T>() {
     return new ReducedValueBuilder<T>();
   }
 
+  /**
+   * 快速创建一个只保留最后一个事件的ReducedValue对象。一般用于实现“事件”到“状态”的映射。
+   *
+   * @param event 要转化为状态的事件
+   * @param initialValue 初始状态，即事件首次触发前的状态
+   * @param mapper 事件对象到状态的映射函数
+   * @param filter 事件过滤函数。如果返回false，则不会触发状态变化
+   * @returns 一个ReducedValue对象
+   */
   public static lastMappedEventValue<EVENT, VALUE>(
     event: EventRegistry<EVENT>,
     initialValue: VALUE,
@@ -28,6 +54,11 @@ export class ReducedValue<T> implements AsyncValue<T> {
     return new ReducedValue(initialValue, [reducer]);
   }
 
+  /**
+   * 简化版的 {@link lastMappedEventValue}，当无需映射事件值时，可以使用这个方法。
+   *
+   * @see lastMappedEventValue
+   */
   public static lastEventValue<EVENT>(
     event: EventRegistry<EVENT>,
     initialValue: EVENT,
@@ -53,6 +84,7 @@ export class ReducedValue<T> implements AsyncValue<T> {
     });
 
     // 这里我们将所有的reducer的事件源都监听起来
+    // TODO: 增加释放监听的机制
     this.listenAllEvents(reducers);
   }
 
@@ -69,6 +101,9 @@ export class ReducedValue<T> implements AsyncValue<T> {
     }
   }
 
+  /**
+   * 获取当前的值
+   */
   public get value() {
     return this._value;
   }

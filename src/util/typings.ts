@@ -1,2 +1,4 @@
 export type GetterOf<T> = () => T;
-export type MapperOf<INPUT extends any[], OUTPUT> = (...input: INPUT) => OUTPUT;
+export type MapperOf<InputType extends any[], OUTPUT> = (
+  ...input: InputType
+) => OUTPUT;
