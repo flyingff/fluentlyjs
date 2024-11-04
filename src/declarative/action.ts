@@ -80,7 +80,6 @@ export class Action<ARG, DATA = void> {
     makeObservable(this, {
       ['_state' as string]: observable.ref,
       ['_error' as string]: observable.ref,
-      ['pendingRunTrigger' as string]: observable.ref,
       state: computed,
       error: computed,
       arg: computed,
