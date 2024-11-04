@@ -2,17 +2,35 @@ import EventEmitter from 'events';
 import { runInAction } from 'mobx';
 import { AsyncValue } from './async';
 import { Scope, Scoped, scopeDisposeSymbol } from '@/context';
+import { createStackContext } from '@/util/stack';
+import { getCurrentDeclarePosition } from '@/util/debug';
 
 export type EventSourceRegister<EVENT> = (
   listener: (event: EVENT) => void,
 ) => () => void;
 
+type EventExecutor = () => void;
+
+const triggeredEventCollectorContext = createStackContext<Set<EventExecutor>>();
+
 export class EventRegistry<EventType> implements Scoped {
+  /**
+   * 用于标识事件的名称，主要用于调试
+   */
+  public readonly name: string;
+
   public readonly scope: Scope;
 
   private readonly emitter: EventEmitter = new EventEmitter();
 
-  public constructor(scope: Scope = Scope.requiredCurrent) {
+  /** 关联事件的集合 */
+  private readonly linkedEvents: Set<(event: EventType) => void> = new Set();
+
+  public constructor(
+    name: string = getCurrentDeclarePosition(),
+    scope: Scope = Scope.requiredCurrent,
+  ) {
+    this.name = name;
     this.scope = scope;
   }
 
@@ -20,15 +38,53 @@ export class EventRegistry<EventType> implements Scoped {
     if (this.scope.disposed) {
       return;
     }
-    // 是否可以做到，在“一次”事件触发中，满足
-    runInAction(() => {
-      this.emitter.emit('event', event);
+
+    const executorCollector = triggeredEventCollectorContext.getContextValue();
+    // 如果当前事件触发非最外层，那么添加触发函数到当前事件触发的集合中
+    if (executorCollector) {
+      executorCollector.add(() => this.emitEvent(event));
+      return;
+    }
+
+    // "一轮"触发事件，当前event是根事件
+    // 收集该轮触发的所有事件的集合
+    const rootExecutorCollector: Set<EventExecutor> = new Set();
+
+    triggeredEventCollectorContext.runInContext(rootExecutorCollector, () => {
+      // 首先触发一次当前事件
+      this.emitEvent(event);
+
+      // 然后迭代触发所有的事件
+      while (rootExecutorCollector.size > 0) {
+        const executorIterated = rootExecutorCollector.values().next();
+        if (executorIterated.done) {
+          break;
+        }
+        const executor = executorIterated.value;
+        rootExecutorCollector.delete(executor);
+        executor();
+      }
     });
   };
+
+  /**
+   * 触发事件
+   */
+  private emitEvent(event: EventType) {
+    runInAction(() => {
+      // 在单次事件触发时，先触发当前事件
+      this.emitter.emit('event', event);
+      // 然后触发所有关联事件
+      this.linkedEvents.forEach(linkedEvent => {
+        linkedEvent(event);
+      });
+    });
+  }
 
   [scopeDisposeSymbol](): void {
     // remove all listeners to avoid memory leak
     this.emitter.removeAllListeners();
+    this.linkedEvents.clear();
   }
 
   /**
@@ -137,6 +193,39 @@ export class EventRegistry<EventType> implements Scoped {
         yield value;
       }
     }
+  }
+
+  /**
+   * 事件联动触发，当事件触发时，会触发另一个事件
+   */
+  public linkTo(
+    eventSource: EventRegistry<EventType>,
+    condition?: (event: EventType) => boolean,
+  ) {
+    return this.linkToWithMapper(eventSource, event => event, condition);
+  }
+
+  /**
+   * 事件联动触发，当事件触发时，会触发另一个事件；
+   *
+   * 同时，这个方法还支持对事件类型进行转换
+   */
+  public linkToWithMapper<NewEventType>(
+    eventSource: EventRegistry<NewEventType>,
+    mapper: (event: EventType) => NewEventType,
+    condition?: (event: EventType) => boolean,
+  ) {
+    const linkFunction = (event: EventType) => {
+      if (condition && !condition(event)) {
+        return;
+      }
+
+      eventSource.emitOnce(mapper(event));
+    };
+    this.linkedEvents.add(linkFunction);
+    return () => {
+      this.linkedEvents.delete(linkFunction);
+    };
   }
 }
 
