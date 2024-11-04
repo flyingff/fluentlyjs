@@ -29,7 +29,7 @@
 // 当然，这个方案也有以下缺点：
 // - 事件的触发链可能会变得复杂（如果复杂性来自于业务逻辑，那么这是必然的）
 // - 事件的触发链可能会变得难以调试（这个可以通过调试工具来解决）
-import { action, computed, makeObservable, observable, reaction } from 'mobx';
+import { action, computed, makeObservable, observable } from 'mobx';
 import { EventRegistry } from './event';
 import { Scope } from '@/context';
 import { createPromiseResolver } from '@/util/promise';
@@ -64,18 +64,6 @@ export class Action<ARG, DATA = void> {
   private _error: unknown = undefined;
 
   /**
-   * 当前正在等待执行的任务；
-   *
-   * 这个队列是为了时序要求，需要等待mobx退出当前的action后再执行，这样能够满足Action永远在Reducer之后执行的要求
-   */
-  private pendingRuns: (() => void)[] = [];
-
-  /**
-   * 用于实际触发事件的触发器变量
-   */
-  private pendingRunTrigger: number = 0;
-
-  /**
    * 最近一次执行的参数，目前还没有增加自动清理机制，有很小可能会造成内存泄漏
    */
   private _arg: ARG | undefined = undefined;
@@ -103,21 +91,10 @@ export class Action<ARG, DATA = void> {
       ['setFailed' as string]: action,
     });
 
-    const disposeReaction = reaction(
-      () => this.pendingRunTrigger,
-      () => {
-        for (const run of this.pendingRuns) {
-          run();
-        }
-        this.pendingRuns.length = 0;
-      },
-    );
-
     this.scope.lifecycle.addDisposeListener(() => {
       // 失去时，释放监听器
       this.eventSuccessTriggers.length = 0;
       this.eventFailedTriggers.length = 0;
-      disposeReaction();
     });
   }
 
@@ -225,17 +202,13 @@ export class Action<ARG, DATA = void> {
 
     (async () => {
       for await (const event of eventRegistry.listen(disposer.promise)) {
-        const runFunc = () => {
-          // 如果filter存在，且filter返回false，则不执行
-          if (filter && !filter(event)) {
-            return;
-          }
-          const args = mapper(event);
-          // 此处this.run将cast为any是因为run方法的参数做了类型判断，但此处无法判断
-          (this.run as any)(args);
-        };
-        this.pendingRuns.push(runFunc);
-        this.pendingRunTrigger++;
+        // 如果filter存在，且filter返回false，则不执行
+        if (filter && !filter(event)) {
+          return;
+        }
+        const args = mapper(event);
+        // 此处this.run将cast为any是因为run方法的参数做了类型判断，但此处无法判断
+        (this.run as any)(args);
       }
     })();
 

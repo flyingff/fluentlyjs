@@ -71,6 +71,9 @@ export class EventRegistry<EventType> implements Scoped {
    * 触发事件
    */
   private emitEvent(event: EventType) {
+    if ((window as any)._F_DEBUG_EVENT_) {
+      console.log(`[Event] ${this.name} emit:`, event);
+    }
     runInAction(() => {
       // 在单次事件触发时，先触发当前事件
       this.emitter.emit('event', event);
