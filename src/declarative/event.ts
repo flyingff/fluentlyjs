@@ -196,6 +196,7 @@ export class EventRegistry<EventType> implements Scoped {
         yield value;
       }
     }
+    generator.return?.();
   }
 
   /**
@@ -229,6 +230,22 @@ export class EventRegistry<EventType> implements Scoped {
     return () => {
       this.linkedEvents.delete(linkFunction);
     };
+  }
+
+  public async waitForOnce(): Promise<EventType> {
+    const disposer = this.listen();
+    try {
+      const result = await disposer.next();
+      if (result.done) {
+        return new Promise(() => {
+          // never resolve
+        });
+      } else {
+        return result.value;
+      }
+    } finally {
+      disposer.return?.();
+    }
   }
 }
 
