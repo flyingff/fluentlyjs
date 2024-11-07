@@ -10,3 +10,11 @@ export const getCurrentDeclarePosition = () => {
   }
   return '(unknown)';
 };
+
+export const isDevelopmentMode = (() => {
+  try {
+    return process.env.NODE_ENV === 'development';
+  } catch {
+    return false;
+  }
+})();

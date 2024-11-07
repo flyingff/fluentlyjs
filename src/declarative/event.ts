@@ -3,7 +3,7 @@ import { runInAction } from 'mobx';
 import { AsyncValue } from './async';
 import { Scope, Scoped, scopeDisposeSymbol } from '@/context';
 import { createStackContext } from '@/util/stack';
-import { getCurrentDeclarePosition } from '@/util/debug';
+import { getCurrentDeclarePosition, isDevelopmentMode } from '@/util/debug';
 
 export type EventSourceRegister<EVENT> = (
   listener: (event: EVENT) => void,
@@ -71,7 +71,7 @@ export class EventRegistry<EventType> implements Scoped {
    * 触发事件
    */
   private emitEvent(event: EventType) {
-    if ((window as any)._F_DEBUG_EVENT_) {
+    if (isDevelopmentMode && (window as any)._F_DEBUG_EVENT_) {
       console.log(`[Event] ${this.name} emit:`, event);
     }
     runInAction(() => {

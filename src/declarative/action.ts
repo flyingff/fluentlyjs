@@ -33,6 +33,7 @@ import { action, computed, makeObservable, observable } from 'mobx';
 import { EventRegistry } from './event';
 import { Scope } from '@/context';
 import { createPromiseResolver } from '@/util/promise';
+import { isDevelopmentMode } from '@/util/debug';
 
 type ActionResultType = void | boolean;
 
@@ -143,8 +144,10 @@ export class Action<ARG, DATA = void> {
     this._state = 'failed';
     this._error = error;
 
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Action failed:', error);
+    if (isDevelopmentMode) {
+      if (this.eventFailedTriggers.length <= 0) {
+        console.warn('Action failed without failed trigger:', error);
+      }
     }
 
     // 触发失败事件
