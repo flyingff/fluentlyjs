@@ -1,6 +1,7 @@
-import { computed, makeObservable, observable, runInAction } from 'mobx';
+import { computed, makeObservable, observable } from 'mobx';
 import { AsyncValue } from './async';
 import { EventRegistry } from './event';
+import { Scope } from '@/context';
 
 /**
  * 表示一个事件和它的reducer函数，表达了如何将一个“事件”转换为一个“值的变化”。
@@ -84,20 +85,20 @@ export class ReducedValue<T> implements AsyncValue<T> {
     });
 
     // 这里我们将所有的reducer的事件源都监听起来
-    // TODO: 增加释放监听的机制
     this.listenAllEvents(reducers);
   }
 
   private listenAllEvents(reducers: ValueReducer<any, T>[]) {
+    // 获取当前的作用域，当作用域销毁时，这个函数会自动停止监听
+    const currentScope = Scope.requiredCurrent;
     for (const reducer of reducers) {
-      (async () => {
-        for await (const event of reducer.eventSource.listen()) {
-          // TODO: add try catch here
-          runInAction(() => {
-            this._value = reducer.reducer(this._value, event);
-          });
+      reducer.eventSource.listenSync(event => {
+        try {
+          this._value = reducer.reducer(this._value, event);
+        } catch (ex) {
+          console.error('[fluentlyjs] Error when reducing value', ex);
         }
-      })();
+      }, currentScope);
     }
   }
 

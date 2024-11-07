@@ -200,6 +200,48 @@ export class EventRegistry<EventType> implements Scoped {
   }
 
   /**
+   * 用于同步监听事件，目前仅规划给ReducedValue使用
+   *
+   * 注意：内部方法，不要直接调用
+   */
+  public listenSync(
+    callback: (event: EventType) => void,
+    ...disposers: (Promise<void> | AbortSignal | Scope)[]
+  ) {
+    const eventHandler = (event: EventType) => {
+      callback(event);
+    };
+
+    // TODO: disposer 更严格的时序
+    const disposer = () => {
+      this.emitter.off('event', eventHandler);
+    };
+
+    const scopeDisposePromises = [
+      this.scope.lifecycle.asPromise,
+      ...disposers,
+    ].map(promise => {
+      if (promise instanceof Promise) {
+        return promise;
+      } else if (promise instanceof AbortSignal) {
+        return new Promise<void>(resolve => {
+          promise.addEventListener('abort', () => resolve());
+        });
+      } else {
+        return promise.lifecycle.asPromise;
+      }
+    });
+
+    const scopeDisposePromise = Promise.race(scopeDisposePromises);
+
+    scopeDisposePromise.then(() => {
+      disposer();
+    });
+
+    this.emitter.on('event', eventHandler);
+  }
+
+  /**
    * 事件联动触发，当事件触发时，会触发另一个事件
    */
   public linkTo(
