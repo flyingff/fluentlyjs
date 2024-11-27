@@ -27,7 +27,6 @@ export class LastValidValueLatch<T> {
     this._lastValidValue =
       initialValue !== null ? new ResolvedAsyncValue(initialValue) : null;
     makeObservable(this, {
-      ['_value' as string]: true,
       value: computed,
     });
   }
